@@ -1,0 +1,49 @@
+D:\MSA2016\Bank Bot\Bank Bot\bin\Bot Application1.dll.config
+D:\MSA2016\Bank Bot\Bank Bot\bin\Bot Application1.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Bot Application1.pdb
+D:\MSA2016\Bank Bot\Bank Bot\bin\Autofac.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Chronic.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.Bot.Builder.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.Bot.Connector.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.IdentityModel.Protocol.Extensions.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.ProjectOxford.Vision.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.Rest.ClientRuntime.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.WindowsAzure.Configuration.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.WindowsAzure.Mobile.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.WindowsAzure.Mobile.Ext.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Newtonsoft.Json.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.IdentityModel.Tokens.Jwt.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Net.Http.Extensions.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Net.Http.Formatting.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Net.Http.Primitives.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Web.Http.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Web.Http.WebHost.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\Autofac.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.Bot.Builder.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.Bot.Connector.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.IdentityModel.Protocol.Extensions.pdb
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.IdentityModel.Protocol.Extensions.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.Rest.ClientRuntime.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.WindowsAzure.Configuration.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.WindowsAzure.Mobile.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\Microsoft.WindowsAzure.Mobile.Ext.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\Newtonsoft.Json.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.IdentityModel.Tokens.Jwt.pdb
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.IdentityModel.Tokens.Jwt.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Net.Http.Extensions.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Net.Http.Formatting.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Net.Http.Primitives.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Web.Http.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\System.Web.Http.WebHost.xml
+D:\MSA2016\Bank Bot\Bank Bot\bin\ar\Microsoft.Bot.Builder.resources.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\en\Microsoft.Bot.Builder.resources.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\es\Microsoft.Bot.Builder.resources.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\fa\Microsoft.Bot.Builder.resources.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\fr\Microsoft.Bot.Builder.resources.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\ja\Microsoft.Bot.Builder.resources.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\ru\Microsoft.Bot.Builder.resources.dll
+D:\MSA2016\Bank Bot\Bank Bot\bin\zh-hans\Microsoft.Bot.Builder.resources.dll
+D:\MSA2016\Bank Bot\Bank Bot\obj\Debug\Bank Bot.csproj.App.config
+D:\MSA2016\Bank Bot\Bank Bot\obj\Debug\Bank Bot.csprojResolveAssemblyReference.cache
+D:\MSA2016\Bank Bot\Bank Bot\obj\Debug\Bot Application1.dll
+D:\MSA2016\Bank Bot\Bank Bot\obj\Debug\Bot Application1.pdb
