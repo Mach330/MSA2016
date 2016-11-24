@@ -80,6 +80,25 @@ namespace Bank_Bot
                 LUISRoot = JsonConvert.DeserializeObject<LUISObj.RootObject>(x);
                 string intent = LUISRoot.topScoringIntent.intent;
 
+                if (!userData.GetProperty<bool>(LOGGED_IN))
+                {
+
+                    BankAccountInformation information = await AzureManager.AzureManagerInstance.getAccountFromName(userMessage);
+                    if (information != null)
+                    {
+                        userData.SetProperty<BankAccountInformation>(PERSONAL_ACCOUNT, information);
+                        userData.SetProperty<bool>(LOGGED_IN, true);
+
+                        string name = userData.GetProperty<BankAccountInformation>(PERSONAL_ACCOUNT).Name;
+                        Activity reply = activity.CreateReply($"You have logged in successfully. Welcome {name}");
+                        await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
+
+                        await connector.Conversations.ReplyToActivityAsync(reply);
+                        return Request.CreateResponse(HttpStatusCode.OK);
+                    }
+
+                }
+
                 if (intent == GREETING)
                 {
 
@@ -105,6 +124,7 @@ namespace Bank_Bot
                     }
 
                     connector.Conversations.ReplyToActivity(greetingReply);
+                    return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else if (intent == FIND)
                 {
@@ -117,6 +137,8 @@ namespace Bank_Bot
                     await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
 
                     await connector.Conversations.SendToConversationAsync(reply);
+
+                    return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else if (intent == INSULT)
                 {
@@ -126,7 +148,7 @@ namespace Bank_Bot
                     if (userData.GetProperty<int>(INSULT_STRIKES) == 3)
                     {
                         //use a card or automatically call the helpline
-                        insultReply = activity.CreateReply($"Would you like to call our helpline?");
+                        insultReply = activity.CreateReply($"Since you are having trouble, perhaps it would be better to call our helpline on 0800 83 83 83");
                     }
                     else
                     {
@@ -136,6 +158,8 @@ namespace Bank_Bot
                     }
 
                     await connector.Conversations.ReplyToActivityAsync(insultReply);
+
+                    return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else if (intent == MORE_INFORMATION)
                 {
@@ -172,223 +196,226 @@ namespace Bank_Bot
 
                 }
 
-              if (!userData.GetProperty<bool>(LOGGED_IN))
-                {
-                    Activity reply = activity.CreateReply($"You are not logged in. Please enter your username");
 
-                    BankAccountInformation information = await AzureManager.AzureManagerInstance.getAccountFromName(userMessage);
-                    if(information != null)
+
+                    if (userMessage == CONFIRMED_PAYMENT)
                     {
-                        userData.SetProperty<BankAccountInformation>(PERSONAL_ACCOUNT, information);
-                        userData.SetProperty<bool>(LOGGED_IN, true);
+                        Activity reply = activity.CreateReply("Processing your transaction...");
+                        await connector.Conversations.ReplyToActivityAsync(reply);
 
-                        string name = userData.GetProperty<BankAccountInformation>(PERSONAL_ACCOUNT).Name;
-                        reply = activity.CreateReply($"You have logged in successfully. Welcome {name}");
-                        await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
-                    }
+                        reply = activity.CreateReply("still processing...");
 
-                    await connector.Conversations.ReplyToActivityAsync(reply);
-                    return Request.CreateResponse(HttpStatusCode.OK);
-                }
+                        //update things and confirm payment
+                        string amount = userData.GetProperty<string>(POTENTIAL_PAYEE_AMOUNT);
+                        string payee = userData.GetProperty<string>(POTENTIAL_PAYEE);
+                        string payer = userData.GetProperty<BankAccountInformation>(PERSONAL_ACCOUNT).Name;
+                        BankAccountInformation personalAccount = userData.GetProperty<BankAccountInformation>(PERSONAL_ACCOUNT);
+                        BankAccountInformation temp = await AzureManager.AzureManagerInstance.getAccountFromName(payee);
+                        double actualAmount = Convert.ToDouble(amount);
 
-                if(userMessage == CONFIRMED_PAYMENT)
-                {
-                    Activity reply = activity.CreateReply("Processing your transaction...");
-                    await connector.Conversations.ReplyToActivityAsync(reply);
+                        personalAccount.Money = personalAccount.Money - actualAmount;
+                        temp.Money = temp.Money + actualAmount;
 
-                    reply = activity.CreateReply("still processing...");
+                        // personalAccount.password = "Greetings";
 
-                    //update things and confirm payment
-                    string amount = userData.GetProperty<string>(POTENTIAL_PAYEE_AMOUNT);
-                    string payee = userData.GetProperty<string>(POTENTIAL_PAYEE);
-                    string payer = userData.GetProperty<BankAccountInformation>(PERSONAL_ACCOUNT).Name;
-                    BankAccountInformation personalAccount = userData.GetProperty<BankAccountInformation>(PERSONAL_ACCOUNT);
-                    BankAccountInformation temp = await AzureManager.AzureManagerInstance.getAccountFromName(payee);
-                    double actualAmount = Convert.ToDouble(amount);
-
-                    personalAccount.Money = personalAccount.Money - actualAmount;
-                      temp.Money = temp.Money + actualAmount;
-
-                   // personalAccount.password = "Greetings";
-
-                    await AzureManager.AzureManagerInstance.UpdateTimeline(personalAccount);
-                    await AzureManager.AzureManagerInstance.UpdateTimeline(temp);
-                    await connector.Conversations.ReplyToActivityAsync(reply);
+                        await AzureManager.AzureManagerInstance.UpdateTimeline(personalAccount);
+                        await AzureManager.AzureManagerInstance.UpdateTimeline(temp);
+                        await connector.Conversations.ReplyToActivityAsync(reply);
 
                     reply = activity.CreateReply($"payment of ${amount} to {payee} has been confirmed");
-                    await connector.Conversations.ReplyToActivityAsync(reply);
+                        await connector.Conversations.ReplyToActivityAsync(reply);
 
-                    userData.SetProperty<string>(POTENTIAL_PAYEE, "");
-                    userData.SetProperty<string>(POTENTIAL_PAYEE_AMOUNT, "");
+                        userData.SetProperty<string>(POTENTIAL_PAYEE, "");
+                        userData.SetProperty<string>(POTENTIAL_PAYEE_AMOUNT, "");
 
-                    return Request.CreateResponse(HttpStatusCode.OK);
-
-                } else if (userMessage == CANCELLED_PAYMENT)
-                {
-                    userData.SetProperty<string>(POTENTIAL_PAYEE, "");
-                    userData.SetProperty<string>(POTENTIAL_PAYEE_AMOUNT, "");
-                    Activity reply = activity.CreateReply($"Payment cancelled");
-                    await connector.Conversations.ReplyToActivityAsync(reply);
-
-
-                    return Request.CreateResponse(HttpStatusCode.OK);
-
-                }
-
-                await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
-
-                if (userData.GetProperty<bool>(SEARCHINGFORBANK))
-                {
-                    string y = await client.GetStringAsync(new Uri(GOOGLE_URL + userMessage + "&destination=" + BANK_LOCATION + "&key=" + GOOGLE_API_KEY));
-                    mapRoot = JsonConvert.DeserializeObject<MapObj.RootObject>(y);
-
-                    Activity PaymentConversation = activity.CreateReply();
-                    PaymentConversation.Recipient = activity.From;
-                    PaymentConversation.Type = "message";
-                    PaymentConversation.Attachments = new List<Attachment>();
-
-                    List<CardImage> cardImages = new List<CardImage>();
-                    //change to google maps image
-                    cardImages.Add(new CardImage(url: MAPS_IMAGE_URL));
-
-                    List<CardAction> cardButtons = new List<CardAction>();
-                    CardAction viewOnWebBtn = new CardAction()
-                    {
-                        Image = BANK_IMAGE_URL,
-                        Value = GOOGLE_MAPS_URL + userMessage + "/" + BANK_LOCATION,
-                        Type = "openUrl",
-                        Title = "View on Google Maps"
-                    };
-                    cardButtons.Add(viewOnWebBtn);
-
-                    HeroCard confirmPaymentCard = new HeroCard()
-                    {
-                        Title = "Route",
-                        Subtitle = "Your nearest bank is at " + BANK_LOCATION 
-                        + ". It is " + mapRoot.routes[0].legs[0].duration.text + " away.",
-                        Images = cardImages,
-                        Buttons = cardButtons
-                    };
-
-                    Attachment confirmPaymentAttachment = confirmPaymentCard.ToAttachment();
-                    PaymentConversation.Attachments.Add(confirmPaymentAttachment);
-                    await connector.Conversations.SendToConversationAsync(PaymentConversation);
-
-                    userData.SetProperty<bool>(SEARCHINGFORBANK, false);
+                        BankAccountInformation payerAccount = await AzureManager.AzureManagerInstance.getAccountFromName(payer);
+                        userData.SetProperty<BankAccountInformation>(PERSONAL_ACCOUNT, payerAccount);
                     await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
 
                     return Request.CreateResponse(HttpStatusCode.OK);
-                }
 
-
-
-                if (intent == PAYMENT)
-                {
-                    var action = LUISRoot.topScoringIntent.actions[0];
-                    //display a card with a confirm button, the amount, the payee
-                    if (action.parameters[0].value == null && action.parameters[1].value == null)
+                    }
+                    else if (userMessage == CANCELLED_PAYMENT)
                     {
-                        Activity testingReply = activity.CreateReply($"You require either a contact name or an account number to pay");
-                        await connector.Conversations.ReplyToActivityAsync(testingReply);
+                        userData.SetProperty<string>(POTENTIAL_PAYEE, "");
+                        userData.SetProperty<string>(POTENTIAL_PAYEE_AMOUNT, "");
+                        Activity reply = activity.CreateReply($"Payment cancelled");
+                        await connector.Conversations.ReplyToActivityAsync(reply);
+
+
+                        return Request.CreateResponse(HttpStatusCode.OK);
+
+                    }
+
+                    await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
+
+                    if (userData.GetProperty<bool>(SEARCHINGFORBANK))
+                    {
+                        string y = await client.GetStringAsync(new Uri(GOOGLE_URL + userMessage + "&destination=" + BANK_LOCATION + "&key=" + GOOGLE_API_KEY));
+                        mapRoot = JsonConvert.DeserializeObject<MapObj.RootObject>(y);
+
+                        Activity PaymentConversation = activity.CreateReply();
+                        PaymentConversation.Recipient = activity.From;
+                        PaymentConversation.Type = "message";
+                        PaymentConversation.Attachments = new List<Attachment>();
+
+                        List<CardImage> cardImages = new List<CardImage>();
+                        //change to google maps image
+                        cardImages.Add(new CardImage(url: MAPS_IMAGE_URL));
+
+                        List<CardAction> cardButtons = new List<CardAction>();
+                        CardAction viewOnWebBtn = new CardAction()
+                        {
+                            Image = BANK_IMAGE_URL,
+                            Value = GOOGLE_MAPS_URL + userMessage + "/" + BANK_LOCATION,
+                            Type = "openUrl",
+                            Title = "View on Google Maps"
+                        };
+                        cardButtons.Add(viewOnWebBtn);
+
+                        HeroCard confirmPaymentCard = new HeroCard()
+                        {
+                            Title = "Route",
+                            Subtitle = "Your nearest bank is at " + BANK_LOCATION
+                            + ". It is " + mapRoot.routes[0].legs[0].duration.text + " away.",
+                            Images = cardImages,
+                            Buttons = cardButtons
+                        };
+
+                        Attachment confirmPaymentAttachment = confirmPaymentCard.ToAttachment();
+                        PaymentConversation.Attachments.Add(confirmPaymentAttachment);
+                        await connector.Conversations.SendToConversationAsync(PaymentConversation);
+
+                        userData.SetProperty<bool>(SEARCHINGFORBANK, false);
+                        await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
 
                         return Request.CreateResponse(HttpStatusCode.OK);
                     }
 
-                    string luckyBugger;
-                    endOutput = null;
 
-                    if (action.parameters[0].value == null)
+                if (userData.GetProperty<bool>(LOGGED_IN))
+                {
+                    if (intent == PAYMENT)
                     {
-                        luckyBugger = action.parameters[1].value[0].entity;
-                        BankAccountInformation information = await AzureManager.AzureManagerInstance.getAccountFromNumber(luckyBugger);
-                        if (information == null)
+                        var action = LUISRoot.topScoringIntent.actions[0];
+                        //display a card with a confirm button, the amount, the payee
+                        if (action.parameters[0].value == null && action.parameters[1].value == null)
                         {
-                            endOutput = "The number " + luckyBugger + " does not exist in this database.";
-                        }
-                    } else
-                    {
-                        luckyBugger = action.parameters[0].value[0].entity;
+                            Activity testingReply = activity.CreateReply($"You require either a contact name or an account number to pay");
+                            await connector.Conversations.ReplyToActivityAsync(testingReply);
 
-                        BankAccountInformation information = await AzureManager.AzureManagerInstance.getAccountFromName(luckyBugger);
-                        if (information == null)
-                        {
-                            endOutput = "The name " + luckyBugger + " does not exist in this database.";
+                            return Request.CreateResponse(HttpStatusCode.OK);
                         }
+
+                        string luckyBugger;
+                        endOutput = null;
+
+                        if (action.parameters[0].value == null)
+                        {
+                            luckyBugger = action.parameters[1].value[0].entity;
+                            BankAccountInformation information = await AzureManager.AzureManagerInstance.getAccountFromNumber(luckyBugger);
+                            if (information == null)
+                            {
+                                endOutput = "The number " + luckyBugger + " does not exist in this database.";
+                            }
+                        }
+                        else
+                        {
+                            luckyBugger = action.parameters[0].value[0].entity;
+
+                            BankAccountInformation information = await AzureManager.AzureManagerInstance.getAccountFromName(luckyBugger);
+                            if (information == null)
+                            {
+                                endOutput = "The name " + luckyBugger + " does not exist in this database.";
+                            }
+                        }
+
+                        if (endOutput != null)
+                        {
+                            Activity reply = activity.CreateReply(endOutput);
+                            await connector.Conversations.ReplyToActivityAsync(reply);
+
+                            return Request.CreateResponse(HttpStatusCode.OK);
+                        }
+
+                        Activity PaymentConversation = activity.CreateReply();
+                        PaymentConversation.Recipient = activity.From;
+                        PaymentConversation.Type = "message";
+                        PaymentConversation.Attachments = new List<Attachment>();
+
+                        List<CardImage> cardImages = new List<CardImage>();
+                        cardImages.Add(new CardImage(url: BANK_IMAGE_URL));
+
+                        List<CardAction> cardButtons = new List<CardAction>();
+                        CardAction confirmButton = new CardAction()
+                        {
+                            Image = TICK_IMAGE_URL,
+                            Value = CONFIRMED_PAYMENT,
+                            Type = "postBack",
+                            Title = "confirm"
+                        };
+                        cardButtons.Add(confirmButton);
+
+                        CardAction cancelBtn = new CardAction()
+                        {
+                            Image = CROSS_IMAGE_URL,
+                            Value = CANCELLED_PAYMENT,
+                            Type = "postBack",
+                            Title = "cancel"
+                        };
+                        cardButtons.Add(cancelBtn);
+
+                        ThumbnailCard confirmPaymentCard = new ThumbnailCard()
+                        {
+                            Title = "Confirm Payment",
+                            Subtitle = "Please confirm you want to pay $" + action.parameters[2].value[0].entity + " to "
+                            + luckyBugger,
+                            Images = cardImages,
+                            Buttons = cardButtons
+                        };
+
+                        userData.SetProperty<string>(POTENTIAL_PAYEE, luckyBugger);
+                        userData.SetProperty<string>(POTENTIAL_PAYEE_AMOUNT, action.parameters[2].value[0].entity);
+                        await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
+
+                        Attachment confirmPaymentAttachment = confirmPaymentCard.ToAttachment();
+                        PaymentConversation.Attachments.Add(confirmPaymentAttachment);
+                        await connector.Conversations.SendToConversationAsync(PaymentConversation);
+
+                        return Request.CreateResponse(HttpStatusCode.OK);
                     }
-
-                    if(endOutput != null)
+                    else if (intent == APPOINTMENT)
                     {
-                        Activity reply = activity.CreateReply(endOutput);
+                        Activity reply = activity.CreateReply($"Sorry I do not understand what you're saying");
                         await connector.Conversations.ReplyToActivityAsync(reply);
 
                         return Request.CreateResponse(HttpStatusCode.OK);
+
                     }
-
-                    Activity PaymentConversation = activity.CreateReply();
-                    PaymentConversation.Recipient = activity.From;
-                    PaymentConversation.Type = "message";
-                    PaymentConversation.Attachments = new List<Attachment>();
-
-                    List<CardImage> cardImages = new List<CardImage>();
-                    cardImages.Add(new CardImage(url: BANK_IMAGE_URL));
-
-                    List<CardAction> cardButtons = new List<CardAction>();
-                    CardAction confirmButton = new CardAction()
+                    else if (intent == CHECK_BALANCE)
                     {
-                        Image = TICK_IMAGE_URL,
-                        Value = CONFIRMED_PAYMENT,
-                        Type = "postBack",
-                        Title = "confirm"
-                    };
-                    cardButtons.Add(confirmButton);
+                        double moneyAmount = userData.GetProperty<BankAccountInformation>(PERSONAL_ACCOUNT).Money;
+                        Activity bankStatement = activity.CreateReply("You have $" + moneyAmount + " in your bank account");
+                        await connector.Conversations.ReplyToActivityAsync(bankStatement);
 
-                    CardAction cancelBtn = new CardAction()
+
+                    }
+                    else if (intent == LOG_OUT)
                     {
-                        Image = CROSS_IMAGE_URL,
-                        Value = CANCELLED_PAYMENT,
-                        Type = "postBack",
-                        Title = "cancel"
-                    };
-                    cardButtons.Add(cancelBtn);
 
-                    ThumbnailCard confirmPaymentCard = new ThumbnailCard()
+                        await stateClient.BotState.DeleteStateForUserAsync(activity.ChannelId, activity.From.Id);
+                        Activity reply = activity.CreateReply($"log out successfull");
+                        await connector.Conversations.ReplyToActivityAsync(reply);
+                    }
+                    else if (intent == NONE)
                     {
-                        Title = "Confirm Payment",
-                        Subtitle = "Please confirm you want to pay $" + action.parameters[2].value[0].entity + " to "
-                        + luckyBugger,
-                        Images = cardImages,
-                        Buttons = cardButtons
-                    };
-
-                    userData.SetProperty<string>(POTENTIAL_PAYEE, luckyBugger);
-                    userData.SetProperty<string>(POTENTIAL_PAYEE_AMOUNT, action.parameters[2].value[0].entity);
-                    await stateClient.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, userData);
-
-                    Attachment confirmPaymentAttachment = confirmPaymentCard.ToAttachment();
-                    PaymentConversation.Attachments.Add(confirmPaymentAttachment);
-                    await connector.Conversations.SendToConversationAsync(PaymentConversation);
-
-                    return Request.CreateResponse(HttpStatusCode.OK);
-                } else if (intent == APPOINTMENT)
+                        Activity reply = activity.CreateReply($"Sorry I do not understand what you're saying");
+                        await connector.Conversations.ReplyToActivityAsync(reply);
+                    }
+                } else
                 {
-                    Activity reply = activity.CreateReply($"Sorry I do not understand what you're saying");
-                    await connector.Conversations.ReplyToActivityAsync(reply);
-
-                } else if (intent == CHECK_BALANCE)
-                {
-                    double moneyAmount = userData.GetProperty<BankAccountInformation>(PERSONAL_ACCOUNT).Money;
-                    Activity bankStatement = activity.CreateReply("You have $" + moneyAmount + " in your bank account");
-                    await connector.Conversations.ReplyToActivityAsync(bankStatement);
-                } else if (intent == LOG_OUT)
-                {
-
-                    await stateClient.BotState.DeleteStateForUserAsync(activity.ChannelId, activity.From.Id);
-                    Activity reply = activity.CreateReply($"log out successfull");
-                    await connector.Conversations.ReplyToActivityAsync(reply);
-                }
-                else  if (intent == NONE)
-                {
-                    Activity reply = activity.CreateReply($"Sorry I do not understand what you're saying");
+                    //not logged in
+                    Activity reply = activity.CreateReply("You are not logged in. Please enter your username to continue");
                     await connector.Conversations.ReplyToActivityAsync(reply);
                 }
 
